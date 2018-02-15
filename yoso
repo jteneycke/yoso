@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+#
+# Usage:
+# $ yoso SCRIPT_NAME
+#
+# Description:
+# Instead of digging into the arcane incantations of bash or fish syntax,
+# just make a portable script that works across both, and lets you use
+# all the goodies that Ruby has to provide!
+
+EDITOR       = code # atom | rubymine | nvim | nano
+SCRIPTS_PATH = "#{Dir.home}/scripts"
+FILE_NAME    = ARGV.first
+
+unless ENV["PATH"].split(":").include?(SCRIPTS_PATH)
+
+  # Add to path in bash_profile (OS X)
+  open("#{Dir.home}/.bash_profile", "a") do |f|
+    f << 'export PATH="$HOME/scripts:$PATH"'
+  end
+
+  # Source it, so we can use it immediately in this term.
+  system("source ~/.bash_profile")
+
+end
+
+# ---------------------------------------------------
+
+TEMPLATE  = <<-RUBY_TEMPLATE
+#!/usr/bin/env ruby
+
+require "pry"
+require "fileutils"
+
+# A multi-line string area to call bash
+BASH = <<-SH
+
+echo "YOSO - You Only Script Once."
+
+SH
+system(BASH)
+RUBY_TEMPLATE
+
+# ---------------------------------------------------
+
+
+require "fileutils" # To chmod +x the new script
+
+Dir.chdir(SCRIPTS_PATH) do
+  unless File.exist?(FILE_NAME)
+    File.open(FILE_NAME, 'w') {|f| f.write(TEMPLATE) }
+    FileUtils.chmod('+x', FILE_NAME)
+    system("#{EDITOR} #{FILE_NAME}")
+  else
+    puts "Whoops! Looks like you've already got a script with that name."
+    puts "Better rename or delete it first so you don't lose it. :)"
+  end
+end
